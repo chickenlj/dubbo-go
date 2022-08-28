@@ -95,6 +95,7 @@ func (c *RegistryConfig) startRegistryConfig() error {
 	c.translateRegistryAddress()
 	if c.UseAsMetaReport {
 		if tmpUrl, err := c.toMetadataReportUrl(); err == nil {
+			logger.Info("Set default metadata center %s", tmpUrl.String())
 			instance.SetMetadataReportInstanceByReg(tmpUrl)
 		} else {
 			return perrors.Wrap(err, "Start RegistryConfig failed.")

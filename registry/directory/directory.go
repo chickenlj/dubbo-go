@@ -31,7 +31,6 @@ import (
 )
 
 import (
-	"dubbo.apache.org/dubbo-go/v3/cluster/directory"
 	"dubbo.apache.org/dubbo-go/v3/cluster/directory/base"
 	"dubbo.apache.org/dubbo-go/v3/cluster/directory/static"
 	"dubbo.apache.org/dubbo-go/v3/cluster/router/chain"
@@ -46,10 +45,6 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/registry"
 	"dubbo.apache.org/dubbo-go/v3/remoting"
 )
-
-func init() {
-	extension.SetDefaultRegistryDirectory(NewRegistryDirectory)
-}
 
 // RegistryDirectory implementation of Directory:
 // Invoker list returned from this Directory's list method have been filtered by Routers
@@ -69,7 +64,7 @@ type RegistryDirectory struct {
 }
 
 // NewRegistryDirectory will create a new RegistryDirectory
-func NewRegistryDirectory(url *common.URL, registry registry.Registry) (directory.Directory, error) {
+func NewRegistryDirectory(url *common.URL, registry registry.Registry) (*RegistryDirectory, error) {
 	if url.SubURL == nil {
 		return nil, perrors.Errorf("url is invalid, suburl can not be nil")
 	}
@@ -91,8 +86,6 @@ func NewRegistryDirectory(url *common.URL, registry registry.Registry) (director
 	}
 
 	dir.consumerConfigurationListener = newConsumerConfigurationListener(dir)
-
-	go dir.subscribe(url.SubURL)
 	return dir, nil
 }
 

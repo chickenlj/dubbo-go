@@ -42,7 +42,7 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/protocol/dubbo3/health"
 	"dubbo.apache.org/dubbo-go/v3/protocol/protocolwrapper"
 	"dubbo.apache.org/dubbo-go/v3/registry"
-	_ "dubbo.apache.org/dubbo-go/v3/registry/directory"
+	"dubbo.apache.org/dubbo-go/v3/registry/directory"
 	"dubbo.apache.org/dubbo-go/v3/remoting"
 )
 
@@ -148,11 +148,17 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 
 	reg := proto.getRegistry(url)
 
-	// new registry directory for store service url from registry
-	directory, err := extension.GetDefaultRegistryDirectory(registryUrl, reg)
+	// new registry directory for each service to store service url from registry
+	dic, err := directory.NewRegistryDirectory(registryUrl, reg)
 	if err != nil {
 		logger.Errorf("consumer service %v create registry directory error, error message is %s, and will return nil invoker!",
 			serviceUrl.String(), err.Error())
+		return nil
+	}
+	// do subscription
+	err = reg.Subscribe(registryUrl, dic)
+	if err != nil {
+		logger.Errorf("Error subscribing for url %s, error msg is %s, and will return nil invoker!", serviceUrl.String(), err.Error())
 		return nil
 	}
 
@@ -168,7 +174,7 @@ func (proto *registryProtocol) Refer(url *common.URL) protocol.Invoker {
 	if err != nil {
 		panic(err)
 	}
-	invoker := cluster.Join(directory)
+	invoker := cluster.Join(dic)
 	return invoker
 }
 
