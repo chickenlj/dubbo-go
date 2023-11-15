@@ -27,10 +27,10 @@ import (
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/client"
+	proto "dubbo.apache.org/dubbo-go/v3/cmd/protoc-gen-go-triple/internal/proto"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
 	"dubbo.apache.org/dubbo-go/v3/protocol/triple/triple_protocol"
 	"dubbo.apache.org/dubbo-go/v3/server"
-	proto "dubbo.apache.org/dubbo-go/v3/triple/protoc-gen-go-triple/internal/proto"
 )
 
 // This is a compile-time assertion to ensure that this generated file and the Triple package

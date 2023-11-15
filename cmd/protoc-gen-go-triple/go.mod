@@ -1,8 +1,8 @@
-module dubbo.apache.org/dubbo-go/v3/triple/protoc-gen-go-triple
+module dubbo.apache.org/dubbo-go/v3/cmd/protoc-gen-go-triple
 
 go 1.15
 
-replace dubbo.apache.org/dubbo-go/v3 => ../../../../dubbo-go
+replace dubbo.apache.org/dubbo-go/v3 => ../../../dubbo-go
 
 require (
 	dubbo.apache.org/dubbo-go/v3 v3.0.6
