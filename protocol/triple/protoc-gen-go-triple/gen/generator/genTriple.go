@@ -18,6 +18,7 @@
 package generator
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/protoc-gen-go-triple/util"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,10 +28,6 @@ import (
 	"github.com/emicklei/proto"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-)
-
-import (
-	"dubbo.apache.org/dubbo-go/v3/triple-tool/util"
 )
 
 func (g *Generator) GenTriple() error {
