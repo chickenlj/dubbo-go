@@ -1,4 +1,4 @@
-module dubbo.apache.org/dubbo-go/v3/triple-tool
+module dubbo.apache.org/dubbo-go/v3/protoc-gen-go-triple
 
 go 1.15
 
