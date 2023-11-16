@@ -1,4 +1,4 @@
-module dubbo.apache.org/dubbo-go/v3/dubbogo-cli
+module chickenlj/dubbo-go/v3/tools/dubbogo-cli
 
 go 1.17
 
