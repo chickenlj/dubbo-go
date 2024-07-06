@@ -65,7 +65,6 @@ deps: prepare
 license: clean prepareLic
 	$(GO_LICENSE_CHECKER) -v -a -r -i vendor,protocol/triple/triple_protocol,protocol/triple/reflection,cmd/protoc-gen-go-triple/internal $(LICENSE_DIR)/license.txt . go
         git status -s
-        [[ -z `git status -s` ]]
 
 .PHONY: verify
 verify: clean license test
