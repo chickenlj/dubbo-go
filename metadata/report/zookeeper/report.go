@@ -18,6 +18,7 @@
 package zookeeper
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/mapping"
 	"encoding/json"
 	"strings"
 )
@@ -40,7 +41,6 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/metadata/mapping/metadata"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report/factory"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 	"dubbo.apache.org/dubbo-go/v3/remoting/zookeeper"
 )
 
@@ -178,7 +178,7 @@ func (m *zookeeperMetadataReport) RegisterServiceAppMapping(key string, group st
 }
 
 // GetServiceAppMapping get the app names from the specified Dubbo service interface
-func (m *zookeeperMetadataReport) GetServiceAppMapping(key string, group string, listener registry.MappingListener) (*gxset.HashSet, error) {
+func (m *zookeeperMetadataReport) GetServiceAppMapping(key string, group string, listener mapping.MappingListener) (*gxset.HashSet, error) {
 	path := m.rootDir + group + constant.PathSeparator + key
 
 	// listen to mapping changes first

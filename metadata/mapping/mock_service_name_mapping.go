@@ -23,7 +23,6 @@ import (
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 )
 
 type MockServiceNameMapping struct{}
@@ -36,7 +35,7 @@ func (m *MockServiceNameMapping) Map(*common.URL) error {
 	return nil
 }
 
-func (m *MockServiceNameMapping) Get(*common.URL, registry.MappingListener) (*gxset.HashSet, error) {
+func (m *MockServiceNameMapping) Get(*common.URL, MappingListener) (*gxset.HashSet, error) {
 	panic("implement me")
 }
 

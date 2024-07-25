@@ -18,6 +18,7 @@
 package server
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/protocol/triple"
 	"reflect"
 	"strconv"
 	"sync"
@@ -460,7 +461,7 @@ type ServiceOptions struct {
 	exported        *atomic.Bool
 	needExport      bool
 	metadataType    string
-	info            *ServiceInfo
+	info            *triple.ServiceInfo
 	ProxyFactoryKey string
 	rpcService      common.RPCService
 	cacheMutex      sync.Mutex

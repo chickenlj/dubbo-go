@@ -15,13 +15,33 @@
  * limitations under the License.
  */
 
-package registry
+syntax = "proto3";
+package org.apache.dubbo.metadata;
 
-import (
-	"github.com/dubbogo/gost/gof/observer"
-)
+option go_package = "dubbo.apache.org/dubbo-go/v3/metadata/triple_api;triple_api";
+option java_package = "org.apache.dubbo.metadata";
+option java_multiple_files = true;
 
-type MappingListener interface {
-	OnEvent(e observer.Event) error
-	Stop()
+service MetadataServiceV2{
+    rpc GetMetadataInfo(Revision) returns (MetadataInfoV2);
+}
+
+message Revision{
+    string value = 1;
+}
+
+message MetadataInfoV2{
+    string app = 1;
+    string version = 2;
+    map<string,ServiceInfoV2> services = 3;
+}
+
+message ServiceInfoV2{
+    string name = 1;
+    string group = 2;
+    string version = 3;
+    string protocol = 4;
+    int32 port = 5;
+    string path = 6;
+    map<string,string> params = 7;
 }

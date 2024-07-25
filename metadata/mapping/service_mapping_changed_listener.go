@@ -15,17 +15,13 @@
  * limitations under the License.
  */
 
-package service
+package mapping
 
 import (
-	"dubbo.apache.org/dubbo-go/v3/common"
+	"github.com/dubbogo/gost/gof/observer"
 )
 
-type RemoteMetadataService interface {
-	// PublishMetadata publish the medata info of service from report
-	PublishMetadata(service string)
-	// GetMetadata get the medata info of service from report
-	GetMetadata(name, revision string) (*common.MetadataInfo, error)
-	// PublishServiceDefinition will call remote metadata's StoreProviderMetadata to store url info and service definition
-	PublishServiceDefinition(url *common.URL) error
+type MappingListener interface {
+	OnEvent(e observer.Event) error
+	Stop()
 }

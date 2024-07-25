@@ -18,13 +18,13 @@
 package report
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/mapping"
 	gxset "github.com/dubbogo/gost/container/set"
 )
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/metadata/identifier"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 )
 
 // MetadataReport is an interface of remote metadata report.
@@ -72,7 +72,7 @@ type MetadataReport interface {
 	RegisterServiceAppMapping(string, string, string) error
 
 	// GetServiceAppMapping get the app names from the specified Dubbo service interface
-	GetServiceAppMapping(string, string, registry.MappingListener) (*gxset.HashSet, error)
+	GetServiceAppMapping(string, string, mapping.MappingListener) (*gxset.HashSet, error)
 
 	// RemoveServiceAppMappingListener remove the serviceMapping listener by key and group
 	RemoveServiceAppMappingListener(string, string) error

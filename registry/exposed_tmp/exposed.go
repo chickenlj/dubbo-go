@@ -18,6 +18,8 @@
 package exposed_tmp
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
+	"dubbo.apache.org/dubbo-go/v3/metadata/service/remote"
 	"reflect"
 	"strconv"
 )
@@ -66,7 +68,7 @@ func RegisterServiceInstance(applicationName string, tag string, metadataType st
 	}
 	// publish metadata to remote
 	if metadataType == constant.RemoteMetadataStorageType {
-		if remoteMetadataService, err := extension.GetRemoteMetadataService(); err == nil && remoteMetadataService != nil {
+		if remoteMetadataService, err := remote.GetRemoteMetadataService(); err == nil && remoteMetadataService != nil {
 			remoteMetadataService.PublishMetadata(applicationName)
 		}
 	}
@@ -109,7 +111,7 @@ func createInstance(url *common.URL, applicationName string, tag string, metadat
 // selectMetadataServiceExportedURL get already be exported url
 func selectMetadataServiceExportedURL() *common.URL {
 	var selectedUrl *common.URL
-	metaDataService, err := extension.GetLocalMetadataService(constant.DefaultKey)
+	metaDataService, err := local.GetLocalMetadataService()
 	if err != nil {
 		logger.Warnf("get metadata service exporter failed, pls check if you import _ \"dubbo.apache.org/dubbo-go/v3/metadata/service/local\"")
 		return nil

@@ -22,6 +22,7 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/config"
 	"dubbo.apache.org/dubbo-go/v3/global"
 	"dubbo.apache.org/dubbo-go/v3/protocol"
+	"dubbo.apache.org/dubbo-go/v3/protocol/triple"
 )
 
 // these functions are used to resolve circular dependencies temporarily.
@@ -97,5 +98,5 @@ func init() {
 
 // these functions are used to resolve circular dependencies temporarily.
 func compatNewInfoInvoker(url *common.URL, info interface{}, svc common.RPCService) protocol.Invoker {
-	return newInfoInvoker(url, info.(*ServiceInfo), svc)
+	return newInfoInvoker(url, info.(*triple.ServiceInfo), svc)
 }

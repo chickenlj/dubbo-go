@@ -23,6 +23,7 @@ package greettriple
 
 import (
 	context "context"
+	"dubbo.apache.org/dubbo-go/v3/protocol/triple"
 	http "net/http"
 )
 
@@ -326,10 +327,10 @@ func (g *GreetServiceGreetServerStreamServer) Send(msg *proto.GreetServerStreamR
 	return g.ServerStream.Send(msg)
 }
 
-var GreetService_ServiceInfo = server.ServiceInfo{
+var GreetService_ServiceInfo = triple.ServiceInfo{
 	InterfaceName: "greet.GreetService",
 	ServiceType:   (*GreetServiceHandler)(nil),
-	Methods: []server.MethodInfo{
+	Methods: []triple.MethodInfo{
 		{
 			Name: "Greet",
 			Type: constant.CallUnary,

@@ -353,12 +353,15 @@ const (
 // metadata report
 
 const (
-	MetaConfigRemote    = "remote"
-	MetaConfigLocal     = "local"
-	KeySeparator        = ":"
-	DefaultPathTag      = "metadata"
-	KeyRevisionPrefix   = "revision"
-	MetadataServiceName = "org.apache.dubbo.metadata.MetadataService" // metadata service
+	MetaConfigRemote      = "remote"
+	MetaConfigLocal       = "local"
+	KeySeparator          = ":"
+	DefaultPathTag        = "metadata"
+	KeyRevisionPrefix     = "revision"
+	MetadataServiceName   = "org.apache.dubbo.metadata.MetadataService"   // metadata service
+	MetadataServiceV2Name = "org.apache.dubbo.metadata.MetadataServiceV2" // metadata service
+
+	MetadataVersion = "meta-v"
 )
 
 // service discovery

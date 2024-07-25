@@ -15,16 +15,11 @@
  * limitations under the License.
  */
 
-package service
-
-import (
-	"sync"
-)
+package metadata
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 )
 
 // MetadataService is used to define meta data related behaviors
@@ -96,42 +91,4 @@ func (mts *BaseMetadataService) ServiceName() (string, error) {
 // Reference will return the reference id of metadata service
 func (mts *BaseMetadataService) Reference() string {
 	return constant.SimpleMetadataServiceName
-}
-
-type MetadataServiceProxyFactory interface {
-	GetProxy(ins registry.ServiceInstance) MetadataService
-}
-
-type MetadataServiceProxyCreator func(ins registry.ServiceInstance) MetadataService
-
-type BaseMetadataServiceProxyFactory struct {
-	proxies sync.Map
-	creator MetadataServiceProxyCreator
-}
-
-func NewBaseMetadataServiceProxyFactory(creator MetadataServiceProxyCreator) *BaseMetadataServiceProxyFactory {
-	return &BaseMetadataServiceProxyFactory{
-		creator: creator,
-	}
-}
-
-func (b *BaseMetadataServiceProxyFactory) GetProxy(ins registry.ServiceInstance) MetadataService {
-	return b.creator(ins)
-}
-
-func getExportedServicesRevision(serviceInstance registry.ServiceInstance) string {
-	metaData := serviceInstance.GetMetadata()
-	return metaData[constant.ExportedServicesRevisionPropertyName]
-}
-
-func ConvertURLArrToIntfArr(urls []*common.URL) []interface{} {
-	if len(urls) == 0 {
-		return []interface{}{}
-	}
-
-	res := make([]interface{}, 0, len(urls))
-	for _, u := range urls {
-		res = append(res, u.String())
-	}
-	return res
 }

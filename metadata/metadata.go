@@ -19,6 +19,9 @@
 package metadata
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/common/extension"
+	"dubbo.apache.org/dubbo-go/v3/metadata/exporter/configurable"
+	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
 	"github.com/dubbogo/gost/log/logger"
 
 	perrors "github.com/pkg/errors"
@@ -26,18 +29,14 @@ import (
 	"go.uber.org/atomic"
 )
 
-import (
-	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/common/extension"
-	"dubbo.apache.org/dubbo-go/v3/metadata/service/exporter"
-)
-
 var (
 	exporting = &atomic.Bool{}
 )
 
 func ExportMetadataService() {
-	ms, err := extension.GetLocalMetadataService(constant.DefaultKey)
+	ms, err := local.GetLocalMetadataService()
+	msV2, err := local.GetLocalMetadataServiceV2()
+
 	if err != nil {
 		logger.Warnf("could not init metadata service", err)
 		return
@@ -54,7 +53,7 @@ func ExportMetadataService() {
 	// So using sync.Once will result in dead lock
 	exporting.Store(true)
 
-	expt := extension.GetMetadataServiceExporter(constant.DefaultKey, ms)
+	expt := configurable.NewMetadataServiceExporter(ms, msV2)
 	if expt == nil {
 		logger.Warnf("get metadata service exporter failed, pls check if you import _ \"dubbo.apache.org/dubbo-go/v3/metadata/service/exporter/configurable\"")
 		return
@@ -74,7 +73,7 @@ func ExportMetadataService() {
 }
 
 // OnEvent only handle ServiceConfigExportedEvent
-func publishMapping(sc exporter.MetadataServiceExporter) error {
+func publishMapping(sc *configurable.MetadataServiceExporter) error {
 	urls := sc.GetExportedURLs()
 
 	for _, u := range urls {

@@ -30,13 +30,11 @@ import (
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/common/extension"
 	"dubbo.apache.org/dubbo-go/v3/metadata/definition"
 	"dubbo.apache.org/dubbo-go/v3/metadata/identifier"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report/delegate"
 	"dubbo.apache.org/dubbo-go/v3/metadata/service"
 	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 )
 
 type MetadataService struct {
@@ -50,10 +48,6 @@ var (
 	metadataServiceOnce           sync.Once
 	remoteMetadataServiceInstance service.RemoteMetadataService
 )
-
-func init() {
-	extension.SetRemoteMetadataService(GetRemoteMetadataService)
-}
 
 // GetRemoteMetadataService will create a new remote MetadataService instance
 func GetRemoteMetadataService() (service.RemoteMetadataService, error) {
@@ -96,9 +90,8 @@ func (s *MetadataService) PublishMetadata(service string) {
 }
 
 // GetMetadata get the medata info of service from report
-func (s *MetadataService) GetMetadata(instance registry.ServiceInstance) (*common.MetadataInfo, error) {
-	revision := instance.GetMetadata()[constant.ExportedServicesRevisionPropertyName]
-	id := identifier.NewSubscriberMetadataIdentifier(instance.GetServiceName(), revision)
+func (s *MetadataService) GetMetadata(name, revision string) (*common.MetadataInfo, error) {
+	id := identifier.NewSubscriberMetadataIdentifier(name, revision)
 	return s.delegateReport.GetAppMetadata(id)
 }
 

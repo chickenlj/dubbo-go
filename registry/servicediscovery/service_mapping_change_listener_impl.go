@@ -18,6 +18,7 @@
 package servicediscovery
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/mapping"
 	"sync"
 )
 
@@ -73,7 +74,7 @@ func (lstn *ServiceMappingChangedListenerImpl) OnEvent(e observer.Event) error {
 	if lstn.stop == ServiceMappingListenerStop {
 		return nil
 	}
-	sm, ok := e.(*registry.ServiceMappingChangeEvent)
+	sm, ok := e.(*mapping.ServiceMappingChangeEvent)
 	if !ok {
 		return nil
 	}

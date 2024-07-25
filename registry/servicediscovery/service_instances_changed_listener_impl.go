@@ -18,7 +18,11 @@
 package servicediscovery
 
 import (
+	common_meta "dubbo.apache.org/dubbo-go/v3/common/metadata"
+	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
+	"dubbo.apache.org/dubbo-go/v3/metadata/service/remote"
 	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"sync"
@@ -34,9 +38,6 @@ import (
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/common/extension"
-	"dubbo.apache.org/dubbo-go/v3/metadata/service"
-	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
 	"dubbo.apache.org/dubbo-go/v3/registry"
 	"dubbo.apache.org/dubbo-go/v3/registry/servicediscovery/store"
 	"dubbo.apache.org/dubbo-go/v3/remoting"
@@ -235,15 +236,16 @@ func GetMetadataInfo(app string, instance registry.ServiceInstance, revision str
 		metadataStorageType = instance.GetMetadata()[constant.MetadataStorageTypePropertyName]
 	}
 	if metadataStorageType == constant.RemoteMetadataStorageType {
-		remoteMetadataServiceImpl, remoteMetadataErr := extension.GetRemoteMetadataService()
+		remoteMetadataServiceImpl, remoteMetadataErr := remote.GetRemoteMetadataService()
 		if remoteMetadataErr == nil {
-			metadataInfo, err = remoteMetadataServiceImpl.GetMetadata(instance)
+			revision := instance.GetMetadata()[constant.ExportedServicesRevisionPropertyName]
+			metadataInfo, err = remoteMetadataServiceImpl.GetMetadata(instance.GetServiceName(), revision)
 		} else {
 			err = remoteMetadataErr
 		}
 	} else {
-		proxyFactory := extension.GetMetadataServiceProxyFactory(constant.DefaultKey)
-		metadataService := proxyFactory.GetProxy(instance)
+		proxyFactory := local.NewBaseMetadataServiceProxyFactory()
+		metadataService := proxyFactory.GetProxy(buildStandardMetadataServiceURL(instance))
 		if metadataService != nil {
 			defer destroyInvoker(metadataService)
 			metadataInfo, err = metadataService.GetMetadataInfo(revision)
@@ -263,15 +265,88 @@ func GetMetadataInfo(app string, instance registry.ServiceInstance, revision str
 	return metadataInfo
 }
 
-func destroyInvoker(metadataService service.MetadataService) {
+func destroyInvoker(metadataService common_meta.MetadataService) {
 	if metadataService == nil {
 		return
 	}
 
-	proxy := metadataService.(*local.MetadataServiceProxy)
+	proxy := metadataService.(*registry.MetadataServiceProxy)
 	if proxy.Invoker == nil {
 		return
 	}
 
 	proxy.Invoker.Destroy()
+}
+
+// buildStandardMetadataServiceURL will use standard format to build the metadata service url.
+func buildStandardMetadataServiceURL(ins registry.ServiceInstance) []*common.URL {
+	ps := getMetadataServiceUrlParams(ins)
+	if ps[constant.ProtocolKey] == "" {
+		return nil
+	}
+
+	res := make([]*common.URL, 0, len(ps))
+	sn := ins.GetServiceName()
+	host := ins.GetHost()
+	convertedParams := make(map[string][]string, len(ps))
+	for k, v := range ps {
+		convertedParams[k] = []string{v}
+	}
+	u := common.NewURLWithOptions(common.WithIp(host),
+		common.WithPath(constant.MetadataServiceName),
+		common.WithProtocol(ps[constant.ProtocolKey]),
+		common.WithPort(ps[constant.PortKey]),
+		common.WithParams(convertedParams),
+		common.WithParamsValue(constant.GroupKey, sn),
+		common.WithParamsValue(constant.InterfaceKey, constant.MetadataServiceName))
+
+	if ps[constant.ProtocolKey] == "tri" {
+		u.SetAttribute(constant.ClientInfoKey, "info")
+		u.Methods = []string{"getMetadataInfo"}
+
+		metaV := ins.GetMetadata()[constant.MetadataVersion]
+		if metaV != "" {
+			u.Path = constant.MetadataServiceV2Name
+			u.SetParam(constant.VersionKey, "2.0.0")
+		} else {
+			u.SetParam(constant.SerializationKey, constant.Hessian2Serialization)
+		}
+	}
+
+	res = append(res, u)
+
+	return res
+}
+
+// getMetadataServiceUrlParams this will convert the metadata service url parameters to map structure
+// it looks like:
+// {"dubbo":{"timeout":"10000","version":"1.0.0","dubbo":"2.0.2","release":"2.7.6","port":"20880"}}
+func getMetadataServiceUrlParams(ins registry.ServiceInstance) map[string]string {
+	ps := ins.GetMetadata()
+	res := make(map[string]string, 2)
+	if str, ok := ps[constant.MetadataServiceURLParamsPropertyName]; ok && len(str) > 0 {
+
+		err := json.Unmarshal([]byte(str), &res)
+		if err != nil {
+			logger.Errorf("could not parse the metadata service url parameters to map", err)
+		}
+	}
+	return res
+}
+
+func getExportedServicesRevision(serviceInstance registry.ServiceInstance) string {
+	metaData := serviceInstance.GetMetadata()
+	return metaData[constant.ExportedServicesRevisionPropertyName]
+}
+
+func ConvertURLArrToIntfArr(urls []*common.URL) []interface{} {
+	if len(urls) == 0 {
+		return []interface{}{}
+	}
+
+	res := make([]interface{}, 0, len(urls))
+	for _, u := range urls {
+		res = append(res, u.String())
+	}
+	return res
 }

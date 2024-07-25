@@ -18,6 +18,7 @@
 package instance
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/mapping"
 	"testing"
 )
 
@@ -33,7 +34,6 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/metadata/identifier"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report/factory"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 )
 
 func TestGetMetadataReportInstance(t *testing.T) {
@@ -63,7 +63,7 @@ func (m mockMetadataReport) RegisterServiceAppMapping(string, string, string) er
 	panic("implement me")
 }
 
-func (m mockMetadataReport) GetServiceAppMapping(string, string, registry.MappingListener) (*gxset.HashSet, error) {
+func (m mockMetadataReport) GetServiceAppMapping(string, string, mapping.MappingListener) (*gxset.HashSet, error) {
 	panic("implement me")
 }
 

@@ -18,6 +18,8 @@
 package local
 
 import (
+	"context"
+	triple_api "dubbo.apache.org/dubbo-go/v3/metadata/triple_api/proto"
 	"sort"
 	"sync"
 )
@@ -31,15 +33,9 @@ import (
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/common/extension"
-	"dubbo.apache.org/dubbo-go/v3/config"
+	common_meta "dubbo.apache.org/dubbo-go/v3/common/metadata"
 	"dubbo.apache.org/dubbo-go/v3/metadata/definition"
-	"dubbo.apache.org/dubbo-go/v3/metadata/service"
 )
-
-func init() {
-	extension.SetLocalMetadataService(constant.DefaultKey, GetLocalMetadataService)
-}
 
 // version will be used by Version func
 const (
@@ -48,7 +44,7 @@ const (
 
 // MetadataService is store and query the metadata info in memory when each service registry
 type MetadataService struct {
-	service.BaseMetadataService
+	common_meta.BaseMetadataService
 	exportedServiceURLs   *sync.Map
 	subscribedServiceURLs *sync.Map
 	serviceDefinitions    *sync.Map
@@ -59,16 +55,18 @@ type MetadataService struct {
 }
 
 var (
-	metadataServiceInstance *MetadataService
-	metadataServiceInitOnce sync.Once
+	metadataServiceInstance   *MetadataService
+	metadataServiceInstanceV2 *MetadataServiceV2
+	metadataServiceInitOnce   sync.Once
+	metadataServiceInitOnceV2 sync.Once
 )
 
-// GetLocalMetadataService which should be singleton initiates a metadata service
-func GetLocalMetadataService() (service.MetadataService, error) {
+// GetLocalMetadataService should be singleton that initiates a metadata service
+func GetLocalMetadataService() (common_meta.MetadataService, error) {
 	metadataServiceInitOnce.Do(func() {
 		metadataServiceInstance = &MetadataService{
 			// todo(DMwangnima): use external config
-			BaseMetadataService:   service.NewBaseMetadataService(config.GetApplicationConfig().Name),
+			BaseMetadataService:   common_meta.NewBaseMetadataService(""),
 			exportedServiceURLs:   &sync.Map{},
 			subscribedServiceURLs: &sync.Map{},
 			serviceDefinitions:    &sync.Map{},
@@ -164,7 +162,7 @@ func (mts *MetadataService) ExportURL(url *common.URL) (bool, error) {
 		return true, nil
 	}
 	mts.mOnce.Do(func() {
-		mts.metadataInfo = common.NewMetadataInfWithApp(config.GetApplicationConfig().Name)
+		mts.metadataInfo = common.NewMetadataInfWithApp(url.GetParam(constant.ApplicationKey, ""))
 	})
 	mts.metadataInfo.AddService(common.NewServiceInfoWithURL(url))
 	return mts.addURL(mts.exportedServiceURLs, url), nil
@@ -279,4 +277,44 @@ func (mts *MetadataService) GetMetadataServiceURL() (*common.URL, error) {
 func (mts *MetadataService) SetMetadataServiceURL(url *common.URL) error {
 	mts.metadataServiceURL = url
 	return nil
+}
+
+type MetadataServiceV2 struct {
+	delegate common_meta.MetadataService
+}
+
+func GetLocalMetadataServiceV2() (triple_api.MetadataServiceV2, error) {
+	metadataServiceInitOnce.Do(func() {
+		delegate, _ := GetLocalMetadataService()
+		metadataServiceInstanceV2 = &MetadataServiceV2{
+			delegate: delegate,
+		}
+	})
+	return metadataServiceInstanceV2, nil
+}
+
+func (mtsV2 *MetadataServiceV2) GetMetadataInfo(ctx context.Context, req *triple_api.Revision) (*triple_api.MetadataInfoV2, error) {
+	metadataInfo, err := mtsV2.delegate.GetMetadataInfo(req.GetValue())
+	return &triple_api.MetadataInfoV2{
+		App:      metadataInfo.App,
+		Version:  metadataInfo.Revision,
+		Services: convert(metadataInfo.Services),
+	}, err
+}
+
+func convert(serviceInfos map[string]*common.ServiceInfo) map[string]*triple_api.ServiceInfoV2 {
+	serviceInfoV2s := make(map[string]*triple_api.ServiceInfoV2, len(serviceInfos))
+	for k, info := range serviceInfos {
+		serviceInfoV2 := &triple_api.ServiceInfoV2{
+			Name:     info.Name,
+			Group:    info.Group,
+			Version:  info.Version,
+			Protocol: info.Protocol,
+			Port:     0,
+			Path:     info.Path,
+			Params:   info.Params,
+		}
+		serviceInfoV2s[k] = serviceInfoV2
+	}
+	return serviceInfoV2s
 }

@@ -35,7 +35,6 @@ import (
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	dubboutil "dubbo.apache.org/dubbo-go/v3/common/dubboutil"
-	"dubbo.apache.org/dubbo-go/v3/metadata"
 	"dubbo.apache.org/dubbo-go/v3/protocol"
 	registry_exposed "dubbo.apache.org/dubbo-go/v3/registry/exposed_tmp"
 )
@@ -46,32 +45,24 @@ var proLock sync.Mutex
 
 type Server struct {
 	invoker protocol.Invoker
-	info    *ServiceInfo
+	info    *triple.ServiceInfo
 
 	cfg *ServerOptions
 
 	svcOptsMap sync.Map
 }
 
-// ServiceInfo is meta info of a service
-type ServiceInfo struct {
-	InterfaceName string
-	ServiceType   interface{}
-	Methods       []MethodInfo
-	Meta          map[string]interface{}
-}
-
 type infoInvoker struct {
 	url       *common.URL
 	base      *protocol.BaseInvoker
-	info      *ServiceInfo
+	info      *triple.ServiceInfo
 	svc       common.RPCService
-	methodMap map[string]*MethodInfo
+	methodMap map[string]*triple.MethodInfo
 }
 
 type ServiceDefinition struct {
 	Handler interface{}
-	Info    *ServiceInfo
+	Info    *triple.ServiceInfo
 	Opts    []ServiceOption
 }
 
@@ -81,7 +72,7 @@ func (ii *infoInvoker) init() {
 		url = url.SubURL
 	}
 	ii.url = url
-	methodMap := make(map[string]*MethodInfo)
+	methodMap := make(map[string]*triple.MethodInfo)
 	for i := range ii.info.Methods {
 		methodMap[ii.info.Methods[i].Name] = &ii.info.Methods[i]
 	}
@@ -117,7 +108,7 @@ func (ii *infoInvoker) Invoke(ctx context.Context, invocation protocol.Invocatio
 	return result
 }
 
-func newInfoInvoker(url *common.URL, info *ServiceInfo, svc common.RPCService) protocol.Invoker {
+func newInfoInvoker(url *common.URL, info *triple.ServiceInfo, svc common.RPCService) protocol.Invoker {
 	invoker := &infoInvoker{
 		base: protocol.NewBaseInvoker(url),
 		info: info,
@@ -127,8 +118,12 @@ func newInfoInvoker(url *common.URL, info *ServiceInfo, svc common.RPCService) p
 	return invoker
 }
 
+func NewInternalInvoker(url *common.URL, info *triple.ServiceInfo, svc common.RPCService) protocol.Invoker {
+	return newInfoInvoker(url, info, svc)
+}
+
 // Register assemble invoker chains like ProviderConfig.Load, init a service per call
-func (s *Server) Register(handler interface{}, info *ServiceInfo, opts ...ServiceOption) error {
+func (s *Server) Register(handler interface{}, info *triple.ServiceInfo, opts ...ServiceOption) error {
 	newSvcOpts, err := s.genSvcOpts(handler, opts...)
 	if err != nil {
 		return err
@@ -183,10 +178,10 @@ func (s *Server) exportServices() (err error) {
 		if infoRaw == nil {
 			err = svcOpts.ExportWithoutInfo()
 		} else {
-			info := infoRaw.(*ServiceInfo)
+			info := infoRaw.(*triple.ServiceInfo)
 			//Add a method with a name of a differtent first-letter case
 			//to achieve interoperability with java
-			var additionalMethods []MethodInfo
+			var additionalMethods []triple.MethodInfo
 			for _, method := range info.Methods {
 				newMethod := method
 				newMethod.Name = dubboutil.SwapCaseFirstRune(method.Name)
@@ -214,7 +209,7 @@ func (s *Server) Serve() error {
 	if err := s.exportInternalServices(); err != nil {
 		return err
 	}
-	metadata.ExportMetadataService()
+	//metadata.ExportMetadataService()
 	registry_exposed.RegisterServiceInstance(s.cfg.Application.Name, s.cfg.Application.Tag, s.cfg.Application.MetadataType)
 	select {}
 }
@@ -276,7 +271,7 @@ type InternalService struct {
 	// internal service name
 	Name    string
 	svcOpts *ServiceOptions
-	info    *ServiceInfo
+	info    *triple.ServiceInfo
 	// This is required
 	// This options is service configuration
 	// Return serviceDefinition and bool, where bool indicates whether it is exported
@@ -291,15 +286,6 @@ type InternalService struct {
 	// The metadata service is exposed at the end
 	// If you have no requirements for the order of service exposure, you can use the default priority or not set
 	Priority int
-}
-
-type MethodInfo struct {
-	Name           string
-	Type           string
-	ReqInitFunc    func() interface{}
-	StreamInitFunc func(baseStream interface{}) interface{}
-	MethodFunc     func(ctx context.Context, args []interface{}, handler interface{}) (interface{}, error)
-	Meta           map[string]interface{}
 }
 
 func NewServer(opts ...ServerOption) (*Server, error) {

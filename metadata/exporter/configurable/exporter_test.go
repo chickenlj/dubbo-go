@@ -56,7 +56,8 @@ func TestConfigurableExporter(t *testing.T) {
 	})
 	mockInitProviderWithSingleRegistry()
 	metadataService, _ := local.GetLocalMetadataService()
-	exported := NewMetadataServiceExporter(metadataService)
+	metadataServiceV2, _ := local.GetLocalMetadataServiceV2()
+	exported := NewMetadataServiceExporter(metadataService, metadataServiceV2)
 
 	t.Run("configurableExporter", func(t *testing.T) {
 		registryURL, _ := common.NewURL("service-discovery://localhost:12345")

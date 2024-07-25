@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package local
+package registry
 
 import (
 	"context"

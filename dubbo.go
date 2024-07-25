@@ -18,6 +18,7 @@
 package dubbo
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/protocol/triple"
 	"sync"
 )
 
@@ -240,7 +241,7 @@ func SetConsumerServiceWithInfo(svc common.RPCService, info *client.ClientInfo) 
 }
 
 // SetProviderServiceWithInfo sets the provider service with the server information.
-func SetProviderServiceWithInfo(svc common.RPCService, info *server.ServiceInfo) {
+func SetProviderServiceWithInfo(svc common.RPCService, info *triple.ServiceInfo) {
 	proLock.Lock()
 	defer proLock.Unlock()
 	providerServices[info.InterfaceName] = &server.ServiceDefinition{

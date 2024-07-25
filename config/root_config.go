@@ -18,6 +18,8 @@
 package config
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/exporter/configurable"
+	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
 	"sync"
 )
 
@@ -38,7 +40,6 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
 	"dubbo.apache.org/dubbo-go/v3/config_center"
-	"dubbo.apache.org/dubbo-go/v3/metadata/service/exporter"
 )
 
 var (
@@ -347,12 +348,6 @@ func (rb *RootConfigBuilder) Build() *RootConfig {
 }
 
 func exportMetadataService() {
-	ms, err := extension.GetLocalMetadataService(constant.DefaultKey)
-	if err != nil {
-		logger.Warnf("could not init metadata service", err)
-		return
-	}
-
 	if !IsProvider() || exporting.Load() {
 		return
 	}
@@ -364,13 +359,15 @@ func exportMetadataService() {
 	// So using sync.Once will result in dead lock
 	exporting.Store(true)
 
-	expt := extension.GetMetadataServiceExporter(constant.DefaultKey, ms)
+	service, _ := local.GetLocalMetadataService()
+	serviceV2, _ := local.GetLocalMetadataServiceV2()
+	expt := configurable.NewMetadataServiceExporter(service, serviceV2)
 	if expt == nil {
 		logger.Warnf("get metadata service exporter failed, pls check if you import _ \"dubbo.apache.org/dubbo-go/v3/metadata/service/exporter/configurable\"")
 		return
 	}
 
-	err = expt.Export(nil)
+	err := expt.Export(nil)
 	if err != nil {
 		logger.Errorf("could not export the metadata service, err = %s", err.Error())
 		return
@@ -384,7 +381,7 @@ func exportMetadataService() {
 }
 
 // OnEvent only handle ServiceConfigExportedEvent
-func publishMapping(sc exporter.MetadataServiceExporter) error {
+func publishMapping(sc *configurable.MetadataServiceExporter) error {
 	urls := sc.GetExportedURLs()
 
 	for _, u := range urls {

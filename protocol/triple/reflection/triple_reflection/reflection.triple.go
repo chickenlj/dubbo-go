@@ -22,6 +22,7 @@ package triple_reflection
 
 import (
 	"context"
+	"dubbo.apache.org/dubbo-go/v3/protocol/triple"
 	"net/http"
 )
 
@@ -177,10 +178,10 @@ func (srv ServerReflectionServerReflectionInfoServer) Recv() (*ServerReflectionR
 	return msg, nil
 }
 
-var ServerReflection_ServiceInfo = server.ServiceInfo{
+var ServerReflection_ServiceInfo = triple.ServiceInfo{
 	InterfaceName: "grpc.reflection.v1alpha.ServerReflection",
 	ServiceType:   (*ServerReflectionHandler)(nil),
-	Methods: []server.MethodInfo{
+	Methods: []triple.MethodInfo{
 		{
 			Name: "ServerReflectionInfo",
 			Type: constant.CallBidiStream,

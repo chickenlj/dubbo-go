@@ -18,6 +18,7 @@
 package nacos
 
 import (
+	"dubbo.apache.org/dubbo-go/v3/metadata/mapping"
 	"encoding/json"
 	"net/url"
 	"strings"
@@ -41,7 +42,6 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/metadata/mapping/metadata"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report"
 	"dubbo.apache.org/dubbo-go/v3/metadata/report/factory"
-	"dubbo.apache.org/dubbo-go/v3/registry"
 	"dubbo.apache.org/dubbo-go/v3/remoting/nacos"
 )
 
@@ -239,7 +239,7 @@ func (n *nacosMetadataReport) getConfig(param vo.ConfigParam) (string, error) {
 	return cfg, nil
 }
 
-func (n *nacosMetadataReport) addListener(key string, group string, notify registry.MappingListener) error {
+func (n *nacosMetadataReport) addListener(key string, group string, notify mapping.MappingListener) error {
 	return n.client.Client().ListenConfig(vo.ConfigParam{
 		DataId: key,
 		Group:  group,
@@ -249,13 +249,13 @@ func (n *nacosMetadataReport) addListener(key string, group string, notify regis
 	})
 }
 
-func callback(notify registry.MappingListener, dataId, data string) {
+func callback(notify mapping.MappingListener, dataId, data string) {
 	appNames := strings.Split(data, constant.CommaSeparator)
 	set := gxset.NewSet()
 	for _, app := range appNames {
 		set.Add(app)
 	}
-	if err := notify.OnEvent(registry.NewServiceMappingChangedEvent(dataId, set)); err != nil {
+	if err := notify.OnEvent(mapping.NewServiceMappingChangedEvent(dataId, set)); err != nil {
 		logger.Errorf("serviceMapping callback err: %s", err.Error())
 	}
 }
@@ -292,7 +292,7 @@ func (n *nacosMetadataReport) RegisterServiceAppMapping(key string, group string
 }
 
 // GetServiceAppMapping get the app names from the specified Dubbo service interface
-func (n *nacosMetadataReport) GetServiceAppMapping(key string, group string, listener registry.MappingListener) (*gxset.HashSet, error) {
+func (n *nacosMetadataReport) GetServiceAppMapping(key string, group string, listener mapping.MappingListener) (*gxset.HashSet, error) {
 	// add service mapping listener
 	if listener != nil {
 		if err := n.addListener(key, group, listener); err != nil {

@@ -37,8 +37,8 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
+	common_meta "dubbo.apache.org/dubbo-go/v3/common/metadata"
 	"dubbo.apache.org/dubbo-go/v3/metadata/mapping"
-	"dubbo.apache.org/dubbo-go/v3/metadata/service"
 	"dubbo.apache.org/dubbo-go/v3/metadata/service/local"
 	"dubbo.apache.org/dubbo-go/v3/metrics"
 	metricMetadata "dubbo.apache.org/dubbo-go/v3/metrics/metadata"
@@ -63,12 +63,12 @@ type ServiceDiscoveryRegistry struct {
 	serviceDiscovery                 registry.ServiceDiscovery
 	subscribedServices               *gxset.HashSet
 	serviceNameMapping               mapping.ServiceNameMapping
-	metaDataService                  service.MetadataService
+	metaDataService                  common_meta.MetadataService
 	registeredListeners              *gxset.HashSet
 	subscribedURLsSynthesizers       []synthesizer.SubscribedURLsSynthesizer
 	serviceRevisionExportedURLsCache map[string]map[string][]*common.URL
 	serviceListeners                 map[string]registry.ServiceInstancesChangedListener
-	serviceMappingListeners          map[string]registry.MappingListener
+	serviceMappingListeners          map[string]mapping.MappingListener
 }
 
 func newServiceDiscoveryRegistry(url *common.URL) (registry.Registry, error) {
@@ -94,7 +94,7 @@ func newServiceDiscoveryRegistry(url *common.URL) (registry.Registry, error) {
 		metaDataService:                  metaDataService,
 		serviceListeners:                 make(map[string]registry.ServiceInstancesChangedListener),
 		// cache for mapping listener
-		serviceMappingListeners: make(map[string]registry.MappingListener),
+		serviceMappingListeners: make(map[string]mapping.MappingListener),
 	}, nil
 }
 
@@ -221,7 +221,7 @@ func (s *ServiceDiscoveryRegistry) Subscribe(url *common.URL, notify registry.No
 	} else {
 		logger.Infof("Find initial mapping applications %q for service %s.", services, url.ServiceKey())
 		// first notify
-		err = mappingListener.OnEvent(registry.NewServiceMappingChangedEvent(url.ServiceKey(), services))
+		err = mappingListener.OnEvent(mapping.NewServiceMappingChangedEvent(url.ServiceKey(), services))
 	}
 	if err != nil {
 		logger.Errorf("[ServiceDiscoveryRegistry] ServiceInstancesChangedListenerImpl handle error:%v", err)
@@ -319,7 +319,7 @@ func shouldSubscribe(url *common.URL) bool {
 	return !shouldRegister(url)
 }
 
-func (s *ServiceDiscoveryRegistry) getServices(url *common.URL, listener registry.MappingListener) *gxset.HashSet {
+func (s *ServiceDiscoveryRegistry) getServices(url *common.URL, listener mapping.MappingListener) *gxset.HashSet {
 	services := gxset.NewSet()
 	serviceNames := url.GetParam(constant.ProvidedBy, "")
 	if len(serviceNames) > 0 {
@@ -334,7 +334,7 @@ func (s *ServiceDiscoveryRegistry) getServices(url *common.URL, listener registr
 	return services
 }
 
-func (s *ServiceDiscoveryRegistry) findMappedServices(url *common.URL, listener registry.MappingListener) *gxset.HashSet {
+func (s *ServiceDiscoveryRegistry) findMappedServices(url *common.URL, listener mapping.MappingListener) *gxset.HashSet {
 	serviceNames, err := s.serviceNameMapping.Get(url, listener)
 	if err != nil {
 		logger.Errorf("get service names catch error, url:%s, err:%s ", url.String(), err.Error())

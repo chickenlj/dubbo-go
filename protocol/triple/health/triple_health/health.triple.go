@@ -22,6 +22,7 @@ package triple_health
 
 import (
 	"context"
+	"dubbo.apache.org/dubbo-go/v3/protocol/triple"
 	"net/http"
 )
 
@@ -180,10 +181,10 @@ func (g *HealthWatchServer) Send(msg *HealthCheckResponse) error {
 	return g.ServerStream.Send(msg)
 }
 
-var Health_ServiceInfo = server.ServiceInfo{
+var Health_ServiceInfo = triple.ServiceInfo{
 	InterfaceName: "grpc.health.v1.Health",
 	ServiceType:   (*HealthHandler)(nil),
-	Methods: []server.MethodInfo{
+	Methods: []triple.MethodInfo{
 		{
 			Name: "Check",
 			Type: constant.CallUnary,
